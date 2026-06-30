@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RuStore Mini App</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: var(--tg-theme-bg-color, #121212);
+            --text-color: var(--tg-theme-text-color, #ffffff);
+            --hint-color: var(--tg-theme-hint-color, #8a8a8e);
+            --card-bg: var(--tg-theme-secondary-bg-color, #1c1c1e);
+            --primary-blue: #005FF9;
+            --button-text: #ffffff;
+            --star-color: #FADB14;
+            --green: #34C759;
+            --red: #FF3B30;
+            --warning-bg: rgba(255, 59, 48, 0.08);
+            --apple-bg: rgba(0, 95, 249, 0.06);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding-bottom: 70px;
+            overflow-y: scroll;
+        }
+
+        /* Нижняя навигация */
+        .bottom-nav {
+            position: fixed; bottom: 0; width: 100%; height: 60px;
+            background-color: var(--card-bg); display: flex;
+            justify-content: space-around; align-items: center;
+            border-top: 1px solid rgba(255,255,255,0.05); z-index: 1000;
+        }
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: var(--hint-color); font-size: 11px; cursor: pointer; }
+        .nav-item.active { color: var(--primary-blue); }
+        .nav-item .material-icons { font-size: 24px; margin-bottom: 2px; }
+
+        /* Экраны */
+        .screen { display: none; padding: 16px; animation: fadeIn 0.2s ease-out; }
+        .screen.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Поиск */
+        .search-container {
+            position: sticky; top: 0; background: var(--bg-color); z-index: 100;
+            padding-bottom: 12px; margin-bottom: 4px;
+        }
+        .search-box {
+            display: flex; align-items: center; background: var(--card-bg);
+            border-radius: 12px; padding: 10px 14px; gap: 8px;
+        }
+        .search-box input {
+            border: none; background: transparent; color: var(--text-color);
+            font-size: 16px; width: 100%; outline: none;
+        }
+        .search-box input::placeholder { color: var(--hint-color); }
+        
+        .chips {
+            display: flex; gap: 8px; overflow-x: auto; padding: 12px 0 4px;
+            scrollbar-width: none;
+        }
+        .chips::-webkit-scrollbar { display: none; }
+        .chip {
+            padding: 6px 16px; background: var(--card-bg); border-radius: 20px;
+            font-size: 14px; white-space: nowrap; cursor: pointer;
+            transition: all 0.2s; border: 1px solid transparent;
+        }
+        .chip.active { background: rgba(0, 95, 249, 0.1); border-color: var(--primary-blue); color: var(--primary-blue); font-weight: 500; }
+
+        /* Карточки приложений */
+        .app-list { display: flex; flex-direction: column; gap: 12px; }
+        .app-card {
+            display: flex; background: var(--card-bg); border-radius: 16px;
+            padding: 12px; align-items: center; cursor: pointer;
+            content-visibility: auto; contain-intrinsic-size: 80px;
+        }
+        .app-card:active { transform: scale(0.98); }
+        .app-icon { width: 56px; height: 56px; border-radius: 14px; object-fit: cover; background: #2c2c2e; flex-shrink: 0; }
+        .app-info { margin-left: 14px; flex: 1; min-width: 0; }
+        .app-name { font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .app-category { font-size: 12px; color: var(--hint-color); margin-top: 2px; }
+        .app-rating { display: flex; align-items: center; gap: 2px; font-size: 12px; color: var(--hint-color); margin-top: 4px; }
+        .app-rating .material-icons { font-size: 14px; color: var(--star-color); }
+        .btn-install { background: var(--primary-blue); color: var(--button-text); border: none; border-radius: 20px; padding: 6px 16px; font-weight: 600; font-size: 13px; }
+
+        /* ===== ДЕТАЛЬНАЯ СТРАНИЦА (OZON INFLUENCER) ===== */
+        .detail-header { display: flex; gap: 16px; margin-bottom: 20px; }
+        .detail-icon { width: 84px; height: 84px; border-radius: 20px; }
+        .detail-name { font-size: 22px; font-weight: bold; }
+        .detail-sub { color: var(--hint-color); font-size: 14px; margin-top: 2px; }
+        .detail-stars { display: flex; align-items: center; gap: 4px; margin-top: 8px; font-weight: 500; }
+        .detail-stars .material-icons { color: var(--star-color); font-size: 18px; }
+
+        .btn-download {
+            width: 100%; background: var(--primary-blue); color: var(--button-text);
+            border: none; border-radius: 14px; padding: 16px;
+            font-size: 17px; font-weight: 700; margin-bottom: 24px;
+            box-shadow: 0 6px 20px rgba(0, 95, 249, 0.35);
+        }
+
+        .desc-text { font-size: 14px; line-height: 1.6; color: var(--hint-color); margin-bottom: 24px; }
+
+        /* Блок Apple ID */
+        .apple-block {
+            background: var(--card-bg); border-radius: 16px; padding: 18px;
+            margin-bottom: 16px;
+        }
+        .apple-block h3 { font-size: 17px; font-weight: 700; margin-bottom: 10px; }
+        .apple-block p { font-size: 13px; color: var(--hint-color); line-height: 1.5; margin-bottom: 16px; }
+
+        .benefits { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+        .benefit-item {
+            display: flex; align-items: flex-start; gap: 12px;
+            background: rgba(0, 95, 249, 0.04); border-radius: 12px; padding: 12px;
+            border: 1px solid rgba(0, 95, 249, 0.08);
+        }
+        .benefit-icon {
+            width: 36px; height: 36px; border-radius: 10px;
+            background: rgba(0, 95, 249, 0.1); display: flex;
+            align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .benefit-icon .material-icons { font-size: 18px; color: var(--primary-blue); }
+        .benefit-text { flex: 1; }
+        .benefit-title { font-size: 14px; font-weight: 600; }
+        .benefit-desc { font-size: 12px; color: var(--hint-color); margin-top: 2px; }
+
+        .btn-outline {
+            width: 100%; background: transparent; color: var(--primary-blue);
+            border: 1.5px solid var(--primary-blue); border-radius: 12px;
+            padding: 12px; font-size: 15px; font-weight: 600;
+        }
+
+        /* Инструкция (аккордеон) */
+        .accordion-content {
+            max-height: 0; overflow: hidden;
+            transition: max-height 0.35s ease, opacity 0.25s ease, padding 0.3s ease;
+            opacity: 0; padding: 0 4px;
+        }
+        .accordion-content.open {
+            max-height: 800px; opacity: 1; padding: 8px 4px 16px;
+        }
+
+        .steps-list {
+            list-style: none; counter-reset: step; display: flex;
+            flex-direction: column; gap: 16px; padding: 0;
+        }
+        .steps-list li {
+            counter-increment: step; display: flex; gap: 12px;
+            font-size: 14px; line-height: 1.4;
+        }
+        .steps-list li::before {
+            content: counter(step);
+            width: 28px; height: 28px; border-radius: 50%;
+            background: var(--primary-blue); color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: 700; flex-shrink: 0;
+        }
+        .steps-list li span { flex: 1; padding-top: 3px; }
+
+        /* Блок ошибки */
+        .error-block {
+            background: var(--warning-bg); border: 1px solid rgba(255, 59, 48, 0.2);
+            border-radius: 16px; padding: 18px; margin-bottom: 16px;
+        }
+        .error-icon { font-size: 32px; margin-bottom: 8px; }
+        .error-block p { font-size: 13px; color: var(--hint-color); line-height: 1.5; }
+
+        .checkbox-wrap {
+            display: flex; align-items: center; gap: 10px;
+            margin: 12px 0 18px; cursor: pointer;
+        }
+        .checkbox-wrap input[type="checkbox"] {
+            width: 20px; height: 20px; accent-color: var(--primary-blue); flex-shrink: 0;
+        }
+        .checkbox-wrap label { font-size: 14px; cursor: pointer; }
+
+        .btn-support {
+            width: 100%; background: var(--card-bg); color: var(--text-color);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;
+            padding: 14px; font-size: 15px; font-weight: 500;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-support .material-icons { font-size: 18px; color: var(--primary-blue); }
+
+        .section-divider { height: 1px; background: rgba(255,255,255,0.06); margin: 20px 0; }
+        .back-btn { color: var(--primary-blue); display: flex; align-items: center; cursor: pointer; margin-bottom: 20px; font-weight: 500; font-size: 15px; }
+        .back-btn .material-icons { font-size: 20px; }
+    </style>
+</head>
+<body>
+
+    <div id="home-screen" class="screen active">
+        <div class="search-container">
+            <div class="search-box">
+                <span class="material-icons" style="color: var(--hint-color)">search</span>
+                <input type="text" id="searchInput" placeholder="Игры, приложения, сервисы...">
+            </div>
+            <div class="chips" id="chips-container"></div>
+        </div>
+        <div class="app-list" id="apps-container"></div>
+    </div>
+
+    <div id="detail-screen" class="screen">
+        <div class="back-btn" onclick="openScreen('home-screen')">
+            <span class="material-icons">arrow_back_ios</span> Назад
+        </div>
+        <div id="detail-content"></div>
+    </div>
+
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="openScreen('home-screen', this)">
+            <span class="material-icons">explore</span><span>Главная</span>
+        </div>
+        <div class="nav-item" onclick="document.getElementById('searchInput').focus()">
+            <span class="material-icons">search</span><span>Поиск</span>
+        </div>
+        <div class="nav-item" onclick="tg.showAlert('Авторизован: ' + (tg.initDataUnsafe?.user?.first_name || 'Гость'))">
+            <span class="material-icons">person</span><span>Профиль</span>
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        if (tg.themeParams.bg_color) {
+            document.documentElement.style.setProperty('--bg-color', tg.themeParams.bg_color);
+            document.documentElement.style.setProperty('--text-color', tg.themeParams.text_color);
+            document.documentElement.style.setProperty('--hint-color', tg.themeParams.hint_color);
+            document.documentElement.style.setProperty('--card-bg', tg.themeParams.secondary_bg_color || '#1c1c1e');
+        }
+
+        // --- ДАННЫЕ: 101 ПРИЛОЖЕНИЕ ---
+        const realIcons = {
+            "VK": "https://upload.wikimedia.org/wikipedia/commons/f/f3/VK_Compact_Logo_%282021-present%29.svg",
+            "СберБанк Онлайн": "https://upload.wikimedia.org/wikipedia/commons/7/7b/Sberbank_Logo_2020.svg",
+            "Telegram": "https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg",
+            "Авито": "https://upload.wikimedia.org/wikipedia/commons/1/15/Avito_logo.svg",
+            "Госуслуги": "https://upload.wikimedia.org/wikipedia/commons/9/91/Gosuslugi_logo.svg",
+            "Wildberries": "https://upload.wikimedia.org/wikipedia/commons/6/6b/Wildberries_logo.svg"
+        };
+
+        const rawData = {
+            "Соцсети":     ["VK", "Telegram", "Одноклассники", "Дзен", "VK Знакомства", "ДругВокруг", "TenChat", "WhatsApp", "Viber", "Discord"],
+            "Финансы":     ["СберБанк Онлайн", "Т-Банк", "Альфа-Банк", "ВТБ Онлайн", "Газпромбанк", "ПСБ", "Росбанк", "Совкомбанк", "Райффайзен", "МТС Банк"],
+            "Покупки":     ["Ozon Influencer", "Wildberries", "Ozon", "Авито", "Яндекс Маркет", "Мегамаркет", "AliExpress", "Lamoda", "ЛЭТУАЛЬ", "Золотое Яблоко"],
+            "Развлечения": ["Кинопоиск", "VK Видео", "RUTUBE", "Иви", "Wink", "Okko", "Яндекс Музыка", "VK Музыка", "Звук", "Premier"],
+            "Транспорт":   ["2ГИС", "Яндекс Карты", "Яндекс Навигатор", "Яндекс Go", "Ситимобил", "РЖД Пассажирам", "АЗС ЛУКОЙЛ", "АЗС Газпромнефть", "Дром", "Авто.ру"],
+            "Инструменты": ["Яндекс Браузер", "Почта Mail", "Облако Mail", "Kaspersky", "билайн", "МегаФон", "МТС", "Tele2", "Yota", "Мой Пирс"],
+            "Госуслуги":   ["Госуслуги", "Госключ", "Налоги ФЛ", "Мой налог", "Госуслуги Авто", "Моя Москва", "МЧС России", "Решаю!", "Госуслуги Культура", "Добродел"],
+            "Еда":         ["ВкусВилл", "Яндекс Еда", "Самокат", "Додо Пицца", "Магнит", "Пятёрочка", "Перекрёсток", "Купер", "Бургер Кинг", "Rostik's"],
+            "Здоровье":    ["ЕМИАС.ИНФО", "СБЕР ЕАПТЕКА", "Аптека.ру", "ЗдравСити", "Шагомер", "Apteka April", "Медси", "ДокМак", "CalZen", "Flo"],
+            "Игры":        ["Tanks Blitz", "Мир домовят", "Black Russia", "Grand Mobile", "Last Day on Earth", "Roblox", "Genshin Impact", "PUBG Mobile", "Brawl Stars", "Mobile Legends"]
+        };
+
+        const categories = ["Все", ...Object.keys(rawData)];
+        const apps = [];
+        let id = 1;
+
+        for (const [cat, names] of Object.entries(rawData)) {
+            names.forEach(name => {
+                apps.push({
+                    id: id++,
+                    name,
+                    category: cat,
+                    rating: (Math.random() * (5.0 - 4.2) + 4.2).toFixed(1),
+                    reviews: Math.floor(Math.random() * 900 + 100) + "K",
+                    size: Math.floor(Math.random() * 200 + 30) + " МБ",
+                    icon: realIcons[name] || `https://picsum.photos/seed/${encodeURIComponent(name)}/80/80`,
+                    description: name === "Ozon Influencer" 
+                        ? "Приложение для блогеров и их работников, зарабатывай вместе с лучшей компанией Ozon."
+                        : `Приложение «${name}» — ведущий сервис в категории «${cat}». Установите и пользуйтесь прямо сейчас!`,
+                    screenshots: [1,2,3].map(i => `https://picsum.photos/seed/${encodeURIComponent(name)}_s${i}/130/230`)
+                });
+            });
+        }
+
+        // --- СОСТОЯНИЕ ---
+        let currentCategory = "Все";
+        let searchQuery = "";
+        let searchTimeout;
+
+        document.getElementById('searchInput').addEventListener('input', e => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                searchQuery = e.target.value.toLowerCase();
+                renderApps();
+            }, 300);
+        });
+
+        function renderChips() {
+            document.getElementById('chips-container').innerHTML = categories.map(cat =>
+                `<div class="chip ${cat === currentCategory ? 'active' : ''}" onclick="setCategory('${cat}')">${cat}</div>`
+            ).join('');
+        }
+
+        function setCategory(cat) {
+            tg.HapticFeedback.selectionChanged();
+            currentCategory = cat;
+            renderChips();
+            renderApps();
+        }
+
+        function renderApps() {
+            const filtered = apps.filter(app => {
+                const matchCat = currentCategory === "Все" || app.category === currentCategory;
+                const q = searchQuery;
+                return matchCat && (!q || app.name.toLowerCase().includes(q) || app.category.toLowerCase().includes(q) || app.description.toLowerCase().includes(q));
+            });
+            const container = document.getElementById('apps-container');
+            if (!filtered.length) {
+                container.innerHTML = `<div style="text-align:center;padding:40px;color:var(--hint-color)">Ничего не найдено</div>`;
+                return;
+            }
+            container.innerHTML = filtered.map(app => `
+                <div class="app-card" onclick="openDetail(${app.id})">
+                    <img src="${app.icon}" class="app-icon" loading="lazy" alt="${app.name}">
+                    <div class="app-info">
+                        <div class="app-name">${app.name}</div>
+                        <div class="app-category">${app.category} · ${app.size}</div>
+                        <div class="app-rating"><span class="material-icons">star</span> ${app.rating}</div>
+                    </div>
+                    <button class="btn-install" onclick="event.stopPropagation(); installApp('${app.name}')">Установить</button>
+                </div>
+            `).join('');
+        }
+
+        function openDetail(id) {
+            tg.HapticFeedback.impactOccurred('light');
+            const app = apps.find(a => a.id === id);
+            const content = document.getElementById('detail-content');
+
+            // ОСОБАЯ СТРАНИЦА ДЛЯ OZON INFLUENCER
+            if (app.name === "Ozon Influencer") {
+                content.innerHTML = `
+                    <!-- Хедер -->
+                    <div class="detail-header">
+                        <img src="${app.icon}" class="detail-icon" alt="${app.name}">
+                        <div>
+                            <div class="detail-name">${app.name}</div>
+                            <div class="detail-sub">${app.category} · ${app.size}</div>
+                            <div class="detail-stars">
+                                <span class="material-icons">star</span>
+                                ${app.rating} · ${app.reviews} оценок
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Кнопка Скачать -->
+                    <button class="btn-download" onclick="installApp('${app.name}')">📲 Скачать</button>
+
+                    <!-- Описание -->
+                    <div class="desc-text">${app.description}</div>
+
+                    <!-- БЛОК: Временный вход в Apple ID -->
+                    <div class="apple-block">
+                        <h3>🍏 Временный вход в Apple ID</h3>
+                        <p>Для установки данного приложения на ваш iPhone необходимо выполнить временный вход в наш общий аккаунт iCloud (Apple ID).</p>
+                        
+                        <div class="benefits">
+                            <div class="benefit-item">
+                                <div class="benefit-icon"><span class="material-icons">timer</span></div>
+                                <div class="benefit-text">
+                                    <div class="benefit-title">10 минут на установку</div>
+                                    <div class="benefit-desc">Этого достаточно, чтобы установить приложение</div>
+                                </div>
+                            </div>
+                            <div class="benefit-item">
+                                <div class="benefit-icon"><span class="material-icons">security</span></div>
+                                <div class="benefit-text">
+                                    <div class="benefit-title">Ваши данные в безопасности</div>
+                                    <div class="benefit-desc">Аккаунт используется временно только для установки</div>
+                                </div>
+                            </div>
+                            <div class="benefit-item">
+                                <div class="benefit-icon"><span class="material-icons">undo</span></div>
+                                <div class="benefit-text">
+                                    <div class="benefit-title">Лёгкий возврат к вашему аккаунту</div>
+                                    <div class="benefit-desc">После установки вы сразу вернете свой Apple ID</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button class="btn-outline" onclick="toggleAccordion()">
+                            <span id="accordionBtnText">📖 Инструкция как выйти</span>
+                        </button>
+                    </div>
+
+                    <!-- БЛОК: Инструкция (аккордеон) -->
+                    <div class="accordion-content" id="accordionContent">
+                        <ol class="steps-list">
+                            <li><span>Откройте приложение «Настройки» на вашем iPhone</span></li>
+                            <li><span>Нажмите на ваше имя в верхней части экрана</span></li>
+                            <li><span>Прокрутите вниз и выберите «Выйти»</span></li>
+                            <li><span>Введите пароль вашего текущего Apple ID</span></li>
+                            <li><span>Подтвердите выход, выбрав «Выйти» в правом верхнем углу</span></li>
+                            <li><span>После выхода нажмите кнопку «Подготовить аккаунт» ниже и введите данные нового аккаунта. У вас будет 10 минут для входа.</span></li>
+                        </ol>
+                    </div>
+
+                    <!-- Разделитель -->
+                    <div class="section-divider"></div>
+
+                    <!-- БЛОК: Подготовка к установке -->
+                    <div class="error-block">
+                        <div class="error-icon">❗</div>
+                        <h3 style="font-size:17px;font-weight:700;margin-bottom:8px;">Подготовка к установке</h3>
+                        <p>Произошёл сбой. Обратитесь в техническую поддержку — мы поможем решить проблему в ближайшее время.</p>
+                    </div>
+
+                    <!-- Чекбокс -->
+                    <div class="checkbox-wrap" onclick="document.getElementById('supportCheckbox').click()">
+                        <input type="checkbox" id="supportCheckbox">
+                        <label for="supportCheckbox">Написать в поддержку</label>
+                    </div>
+
+                    <!-- Кнопка поддержки -->
+                    <button class="btn-support" onclick="openSupport()">
+                        <span class="material-icons">support_agent</span> @RuStoreOzon
+                    </button>
+                `;
+            } else {
+                // СТАНДАРТНАЯ СТРАНИЦА ДЛЯ ОСТАЛЬНЫХ
+                content.innerHTML = `
+                    <div class="detail-header">
+                        <img src="${app.icon}" class="detail-icon" alt="${app.name}">
+                        <div>
+                            <div class="detail-name">${app.name}</div>
+                            <div class="detail-sub">${app.category} · ${app.size}</div>
+                            <div class="detail-stars">
+                                <span class="material-icons">star</span>
+                                ${app.rating} · ${app.reviews} оценок
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:12px;overflow-x:auto;padding-bottom:12px;margin-bottom:16px;">
+                        ${app.screenshots.map(src => `<img src="${src}" style="width:130px;height:230px;border-radius:12px;flex-shrink:0;object-fit:cover;background:#2c2c2e;" loading="lazy">`).join('')}
+                    </div>
+                    <div class="desc-text">${app.description}</div>
+                    <button class="btn-download" onclick="installApp('${app.name}')">📲 Скачать</button>
+                `;
+            }
+
+            openScreen('detail-screen');
+        }
+
+        function toggleAccordion() {
+            const el = document.getElementById('accordionContent');
+            const btn = document.getElementById('accordionBtnText');
+            if (el.classList.contains('open')) {
+                el.classList.remove('open');
+                btn.textContent = '📖 Инструкция как выйти';
+            } else {
+                el.classList.add('open');
+                btn.textContent = '▲ Скрыть инструкцию';
+                tg.HapticFeedback.impactOccurred('light');
+            }
+        }
+
+        function openSupport() {
+            tg.HapticFeedback.notificationOccurred('success');
+            window.open('tg://resolve?domain=RuStoreOzon', '_blank');
+        }
+
+        function openScreen(screenId, navElement = null) {
+            document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+            window.scrollTo(0, 0);
+            if (navElement) {
+                tg.HapticFeedback.selectionChanged();
+                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+                navElement.classList.add('active');
+            }
+        }
+
+        function installApp(name) {
+            tg.HapticFeedback.notificationOccurred('success');
+            tg.showAlert(`✅ Загрузка приложения: ${name}`);
+        }
+
+        renderChips();
+        renderApps();
+    </script>
+</body>
+</html>
